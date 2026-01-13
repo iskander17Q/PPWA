@@ -1,62 +1,146 @@
 {% extends 'layout/base.html' %}
 {% block content %}
+<div class="page-header">
+    <h1>Анализ здоровья растений</h1>
+    <p class="muted">Оценка по RGB индексам ExG и VARI. NDVI будет добавлен позже для мультиспектра.</p>
+</div>
+
 <div class="card">
-  <h3>Plant Health — RGB Analysis</h3>
-  <p class="muted">Оценка по RGB индексам ExG и VARI. NDVI будет добавлен позже для мультиспектра.</p>
-  <div class="top-actions"><a class="btn" href="/">Home</a></div>
-
-  <div class="card">
     <form id="analyzeForm">
-      <label>Field name (optional)</label>
-      <input type="text" name="plot_name" id="plot_name" placeholder="Field A">
+        <div class="field">
+            <label for="plot_name">
+                <span>🌾</span>
+                <span>Название поля (опционально)</span>
+            </label>
+            <input type="text" name="plot_name" id="plot_name" placeholder="Например: Поле A, Участок 1">
+        </div>
 
-      <label>Image file (jpg/png)</label>
-      <input type="file" name="file" id="file" accept="image/*">
+        <div class="field">
+            <label for="file">
+                <span>📷</span>
+                <span>Изображение для анализа (jpg/png)</span>
+            </label>
+            <div style="position: relative;">
+                <input type="file" name="file" id="file" accept="image/*" style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2;">
+                <div id="fileDisplay" style="display: flex; align-items: center; gap: 12px; padding: 16px; border: 2px dashed var(--border-color); border-radius: var(--border-radius-sm); background: var(--bg-secondary); transition: var(--transition); cursor: pointer;">
+                    <div style="font-size: 32px;">📁</div>
+                    <div style="flex: 1;">
+                        <div id="fileText" style="font-weight: 600; color: var(--text-primary);">Выберите файл для загрузки</div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Нажмите для выбора изображения</div>
+                    </div>
+                    <div style="padding: 8px 16px; background: var(--primary); color: white; border-radius: var(--border-radius-sm); font-weight: 600; font-size: 14px;">
+                        Выбрать файл
+                    </div>
+                </div>
+            </div>
+        </div>
 
-      <button id="submitBtn" class="btn primary">Generate PDF report</button>
+        <div style="margin-top: 24px; display: flex; gap: 12px; align-items: center;">
+            <button id="submitBtn" type="submit" class="btn primary" style="flex: 1; padding: 16px; font-size: 16px; font-weight: 600;">
+                <span>📊</span>
+                <span>Сгенерировать PDF отчёт</span>
+            </button>
+        </div>
     </form>
-    <div id="status" class="status"></div>
-  </div>
+    
+    <div id="status" style="margin-top: 24px;"></div>
 </div>
 
 <script>
-  const form = document.getElementById('analyzeForm');
-  const status = document.getElementById('status');
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    status.innerHTML = '';
+    const form = document.getElementById('analyzeForm');
+    const status = document.getElementById('status');
     const fileInput = document.getElementById('file');
-    if (!fileInput.files.length) {
-      status.innerHTML = '<div class="alert error">Please select an image file.</div>';
-      return;
-    }
-    const fd = new FormData();
-    fd.append('file', fileInput.files[0]);
-    fd.append('plot_name', document.getElementById('plot_name').value || '');
-    status.innerHTML = '<div class="alert info">Uploading and analyzing...</div>';
-    try {
-      const res = await fetch('/api/analyze', { method: 'POST', body: fd });
-      if (!res.ok) {
-        // handle special 'offer upgrade' response
-        if (res.status === 402) {
-          const j = await res.json().catch(() => null);
-          status.innerHTML = '<div class="alert warning">' + (j && j.message ? j.message : 'Лимит попыток исчерпан.') + ' <a href="/app/upgrade">Перейти к PRO</a></div>';
-          const btn = document.createElement('button');
-          btn.className = 'btn';
-          btn.textContent = 'Перейти к оплате';
-          btn.addEventListener('click', () => { window.location.href = '/app/upgrade'; });
-          status.querySelector('.alert').appendChild(document.createTextNode(' '));
-          status.querySelector('.alert').appendChild(btn);
-          return;
+    const fileDisplay = document.getElementById('fileDisplay');
+    const fileText = document.getElementById('fileText');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Update file display when file is selected
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            fileText.innerHTML = `<strong>${file.name}</strong> <span style="color: var(--text-muted); font-size: 12px;">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>`;
+            fileDisplay.style.borderColor = 'var(--primary)';
+            fileDisplay.style.background = 'rgba(99, 102, 241, 0.05)';
+        } else {
+            fileText.innerHTML = 'Выберите файл для загрузки';
+            fileDisplay.style.borderColor = 'var(--border-color)';
+            fileDisplay.style.background = 'var(--bg-secondary)';
         }
-        const text = await res.text();
-        throw new Error(text);
-      }
-      const data = await res.json();
-      status.innerHTML = '<div class="alert success">Report ready. <a href="/app/reports/' + data.report_id + '">View report</a></div>';
-    } catch (err) {
-      status.innerHTML = '<div class="alert error">Error: ' + err + '</div>';
-    }
-  });
+    });
+
+    // Hover effect for file display
+    fileDisplay.addEventListener('mouseenter', function() {
+        if (!fileInput.files.length) {
+            this.style.borderColor = 'var(--primary-light)';
+            this.style.background = 'rgba(99, 102, 241, 0.02)';
+        }
+    });
+    fileDisplay.addEventListener('mouseleave', function() {
+        if (!fileInput.files.length) {
+            this.style.borderColor = 'var(--border-color)';
+            this.style.background = 'var(--bg-secondary)';
+        }
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        status.innerHTML = '';
+        
+        if (!fileInput.files.length) {
+            status.innerHTML = '<div class="alert error"><span>⚠️</span><span>Пожалуйста, выберите файл изображения.</span></div>';
+            fileDisplay.style.borderColor = 'var(--error)';
+            setTimeout(() => {
+                if (!fileInput.files.length) {
+                    fileDisplay.style.borderColor = 'var(--border-color)';
+                }
+            }, 3000);
+            return;
+        }
+
+        // Disable submit button
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>⏳</span><span>Обработка...</span>';
+        submitBtn.style.opacity = '0.7';
+        submitBtn.style.cursor = 'not-allowed';
+
+        const fd = new FormData();
+        fd.append('file', fileInput.files[0]);
+        fd.append('plot_name', document.getElementById('plot_name').value || '');
+        
+        status.innerHTML = '<div class="alert info"><span>📤</span><span>Загрузка и анализ изображения...</span></div>';
+        
+        try {
+            const res = await fetch('/api/analyze', { method: 'POST', body: fd });
+            if (!res.ok) {
+                // handle special 'offer upgrade' response
+                if (res.status === 402) {
+                    const j = await res.json().catch(() => null);
+                    status.innerHTML = '<div class="alert warning"><span>⚠️</span><div>' + (j && j.message ? j.message : 'Лимит попыток исчерпан.') + ' <a href="/app/upgrade" style="color: var(--warning); font-weight: 600;">Перейти к PRO</a></div></div>';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>📊</span><span>Сгенерировать PDF отчёт</span>';
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                    return;
+                }
+                const text = await res.text();
+                throw new Error(text);
+            }
+            const data = await res.json();
+            status.innerHTML = '<div class="alert success"><span>✅</span><div>Отчёт готов! <a href="/app/reports/' + data.report_id + '" style="color: var(--success); font-weight: 600; text-decoration: underline;">Просмотреть отчёт</a></div></div>';
+            
+            // Reset form
+            form.reset();
+            fileText.innerHTML = 'Выберите файл для загрузки';
+            fileDisplay.style.borderColor = 'var(--border-color)';
+            fileDisplay.style.background = 'var(--bg-secondary)';
+        } catch (err) {
+            status.innerHTML = '<div class="alert error"><span>❌</span><div>Ошибка: ' + err.message + '</div></div>';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>📊</span><span>Сгенерировать PDF отчёт</span>';
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+        }
+    });
 </script>
 {% endblock %}

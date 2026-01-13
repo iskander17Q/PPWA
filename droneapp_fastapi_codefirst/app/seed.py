@@ -7,19 +7,20 @@ def seed():
         # Create plans
         free = session.query(SubscriptionPlan).filter_by(name='Free').one_or_none()
         if not free:
-            free = SubscriptionPlan(name='Free', free_attempts_limit=2)
+            free = SubscriptionPlan(id=1, name='Free', free_attempts_limit=2)
             session.add(free)
             session.flush()
 
         pro = session.query(SubscriptionPlan).filter_by(name='Pro').one_or_none()
         if not pro:
-            pro = SubscriptionPlan(name='Pro', free_attempts_limit=999999)
+            pro = SubscriptionPlan(id=2, name='Pro', free_attempts_limit=999999)
             session.add(pro)
             session.flush()
 
         admin = session.query(User).filter_by(email='admin@droneapp.local').one_or_none()
         if not admin:
             admin = User(
+                id=1,
                 email='admin@droneapp.local',
                 password_hash='fakehash',
                 name='Admin',
@@ -33,6 +34,7 @@ def seed():
         user = session.query(User).filter_by(email='user@droneapp.local').one_or_none()
         if not user:
             user = User(
+                id=2,
                 email='user@droneapp.local',
                 password_hash='fakehash',
                 name='User',
@@ -43,15 +45,15 @@ def seed():
             session.add(user)
             session.flush()
 
-        img = InputImage(user_id=user.id, filename='sample.jpg', storage_path='/tmp/sample.jpg')
+        img = InputImage(id=1, user_id=user.id, filename='sample.jpg', storage_path='/tmp/sample.jpg')
         session.add(img)
         session.flush()
 
-        run = ProcessingRun(user_id=user.id, input_image_id=img.id, index_type='NDVI', status='SUCCESS')
+        run = ProcessingRun(id=1, user_id=user.id, input_image_id=img.id, index_type='NDVI', status='SUCCESS')
         session.add(run)
         session.flush()
 
-        out = OutputArtifact(processing_run_id=run.id, artifact_type='VISUAL_PNG', storage_path='/tmp/out.png')
+        out = OutputArtifact(id=1, processing_run_id=run.id, artifact_type='VISUAL_PNG', storage_path='/tmp/out.png')
         session.add(out)
 
         session.commit()

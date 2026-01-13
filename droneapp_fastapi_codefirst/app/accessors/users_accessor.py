@@ -31,6 +31,26 @@ class UsersAccessor:
             .first()
         )
 
+    def get_user_by_email(self, email: str) -> Optional[User]:
+        # Normalize email for search: trim and lowercase
+        email_normalized = str(email).strip().lower()
+        # Try exact match first
+        user = (
+            self.db.query(User)
+            .options(joinedload(User.plan))
+            .filter(User.email == email_normalized)
+            .first()
+        )
+        if user:
+            return user
+        # Fallback: case-insensitive search (for existing data)
+        return (
+            self.db.query(User)
+            .options(joinedload(User.plan))
+            .filter(User.email.ilike(email_normalized))
+            .first()
+        )
+
     def _ensure_plan(self, plan_id: int) -> SubscriptionPlan:
         plan = self.db.get(SubscriptionPlan, plan_id)
         if not plan:
@@ -38,9 +58,24 @@ class UsersAccessor:
         return plan
 
     def create_user(self, data: Dict[str, Any]) -> User:
+        # Normalize email: trim and lowercase
+        email = str(data["email"]).strip().lower()
+        
+        # Check if user with this email already exists
+        existing = self.get_user_by_email(email)
+        if existing:
+            raise ValueError(f"Пользователь с email '{email}' уже существует (ID: {existing.id})")
+        
         self._ensure_plan(data["plan_id"])
+        
+        # For SQLite, we need to generate ID manually if using BigInteger
+        # Get the next available ID
+        max_id = self.db.query(User.id).order_by(User.id.desc()).first()
+        next_id = (max_id[0] + 1) if max_id else 1
+        
         user = User(
-            email=data["email"],
+            id=next_id,  # Explicitly set ID for SQLite
+            email=email,
             name=data.get("name"),
             phone=data.get("phone"),
             role=data["role"],
@@ -54,7 +89,12 @@ class UsersAccessor:
             self.db.commit()
         except IntegrityError as exc:
             self.db.rollback()
-            raise ValueError("Пользователь с таким email уже существует") from exc
+            # Try to find the conflicting user
+            conflicting = self.get_user_by_email(email)
+            if conflicting:
+                raise ValueError(f"Пользователь с email '{email}' уже существует (ID: {conflicting.id})") from exc
+            else:
+                raise ValueError(f"Ошибка при создании пользователя: {str(exc)}") from exc
         self.db.refresh(user)
         return user
 

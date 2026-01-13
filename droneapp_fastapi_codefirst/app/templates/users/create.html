@@ -1,62 +1,88 @@
 {% extends "users/base.html" %}
 {% block users_content %}
-    <h2 style="margin-top:0;">Создать пользователя</h2>
+<div class="page-header">
+    <h1>Создать пользователя</h1>
+    <p class="muted">Добавление нового пользователя в систему</p>
+</div>
 
-    {% if errors and errors|length %}
-        <div class="errors">
-            {% for err in errors %}<div>{{ err }}</div>{% endfor %}
-        </div>
-    {% endif %}
-
-    {% if plan_missing %}
-        <div class="alert">Нет тарифных планов. Создайте план, затем добавьте пользователя.</div>
-    {% endif %}
-
-    <form method="post">
-        <fieldset {% if plan_missing %}disabled{% endif %}>
-            <div class="field">
-                <label for="email">Email *</label>
-                <input type="email" id="email" name="email" value="{{ form_data.email if form_data else '' }}" required>
-            </div>
-            <div class="field">
-                <label for="name">Имя</label>
-                <input type="text" id="name" name="name" value="{{ form_data.name if form_data else '' }}">
-            </div>
-            <div class="field">
-                <label for="phone">Телефон</label>
-                <input type="text" id="phone" name="phone" value="{{ form_data.phone if form_data else '' }}">
-            </div>
-            <div class="field">
-                <label for="role">Роль *</label>
-                <select id="role" name="role" required>
-                    {% set current_role = form_data.role if form_data else 'USER' %}
-                    <option value="USER" {% if current_role == 'USER' %}selected{% endif %}>USER</option>
-                    <option value="ADMIN" {% if current_role == 'ADMIN' %}selected{% endif %}>ADMIN</option>
-                </select>
-            </div>
-            <div class="field">
-                <label for="plan_id">Тариф *</label>
-                <select id="plan_id" name="plan_id" required>
-                    {% for plan in plans %}
-                        {% set selected = form_data.plan_id if form_data else None %}
-                        <option value="{{ plan.id }}" {% if selected == plan.id %}selected{% endif %}>{{ plan.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="field checkbox">
-                {% set active_flag = form_data.is_active if form_data is not none else True %}
-                <input type="checkbox" id="is_active" name="is_active" value="true" {% if active_flag %}checked{% endif %}>
-                <label for="is_active" style="margin:0;">Активен</label>
-            </div>
-            <div class="field">
-                <label>Чтение</label>
-                <div class="meta">
-                    <div class="item"><strong>ID</strong><br>—</div>
-                    <div class="item"><strong>Создан</strong><br>—</div>
-                    <div class="item"><strong>Попыток использовано</strong><br>0</div>
+{% if errors and errors|length %}
+<div class="alert error">
+    <span>⚠️</span>
+    <div>
+        {% for err in errors %}<div>{{ err }}</div>{% endfor %}
+        {% if existing_user %}
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(239, 68, 68, 0.3);">
+            <p style="margin: 0 0 8px 0; font-weight: 600;">Найден существующий пользователь:</p>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <div style="flex: 1;">
+                    <div><strong>Email:</strong> {{ existing_user.email }}</div>
+                    <div><strong>Имя:</strong> {{ existing_user.name or '—' }}</div>
+                    <div><strong>Роль:</strong> {{ existing_user.role }}</div>
                 </div>
+                <a href="/users/{{ existing_user.id }}/edit" class="btn primary" style="text-decoration: none;">
+                    <span>✏️</span>
+                    <span>Редактировать</span>
+                </a>
             </div>
-            <button type="submit" class="btn">Сохранить</button>
-        </fieldset>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if plan_missing %}
+<div class="alert error">
+    <span>⚠️</span>
+    <span>Нет тарифных планов. Создайте план, затем добавьте пользователя.</span>
+</div>
+{% endif %}
+
+<div class="card">
+    <form method="post">
+        <div class="field">
+            <label for="email">Email *</label>
+            <input type="email" id="email" name="email" value="{{ form_data.email if form_data else '' }}" required placeholder="user@example.com">
+        </div>
+        <div class="field">
+            <label for="name">Имя</label>
+            <input type="text" id="name" name="name" value="{{ form_data.name if form_data else '' }}" placeholder="Имя пользователя">
+        </div>
+        <div class="field">
+            <label for="phone">Телефон</label>
+            <input type="tel" id="phone" name="phone" value="{{ form_data.phone if form_data else '' }}" placeholder="+7 (999) 123-45-67">
+        </div>
+        <div class="field">
+            <label for="role">Роль *</label>
+            <select id="role" name="role" required>
+                {% set current_role = form_data.role if form_data else 'USER' %}
+                <option value="USER" {% if current_role=='USER' %}selected{% endif %}>USER</option>
+                <option value="ADMIN" {% if current_role=='ADMIN' %}selected{% endif %}>ADMIN</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="plan_id">Тариф *</label>
+            <select id="plan_id" name="plan_id" required>
+                {% for plan in plans %}
+                {% set selected = form_data.plan_id if form_data else None %}
+                <option value="{{ plan.id }}" {% if selected==plan.id %}selected{% endif %}>{{ plan.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field" style="display: flex; align-items: center; gap: 8px; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+            {% set active_flag = form_data.is_active if form_data is not none else True %}
+            <input type="checkbox" id="is_active" name="is_active" value="true" {% if active_flag %}checked{% endif %}>
+            <label for="is_active" style="margin:0; cursor: pointer;">Активен</label>
+        </div>
+        
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="submit" class="btn primary" style="flex: 1;" {% if plan_missing %}disabled{% endif %}>
+                <span>➕</span>
+                <span>Создать пользователя</span>
+            </button>
+            <a class="btn" href="/users" style="background: var(--text-secondary);">
+                <span>Отмена</span>
+            </a>
+        </div>
     </form>
+</div>
 {% endblock %}

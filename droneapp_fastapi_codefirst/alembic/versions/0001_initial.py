@@ -20,7 +20,7 @@ def upgrade():
         sa.Column('id', sa.BigInteger(), primary_key=True),
         sa.Column('name', sa.String(length=100), nullable=False),
         sa.Column('free_attempts_limit', sa.Integer(), nullable=False, server_default=sa.text('0')),
-        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('now()'))
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text("(datetime('now'))"))
     )
 
     op.create_table(
@@ -29,11 +29,11 @@ def upgrade():
         sa.Column('email', sa.String(length=255), nullable=False, unique=True),
         sa.Column('password_hash', sa.String(length=255), nullable=False),
         sa.Column('name', sa.String(length=120), nullable=True),
-        sa.Column('role', sa.String(length=10), nullable=False, server_default=sa.text("'USER'::character varying")),
+        sa.Column('role', sa.String(length=10), nullable=False, server_default="'USER'"),
         sa.Column('plan_id', sa.BigInteger(), nullable=False),
         sa.Column('free_attempts_used', sa.Integer(), nullable=False, server_default=sa.text('0')),
-        sa.Column('is_active', sa.Boolean(), nullable=False, server_default=sa.text('true')),
-        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
+        sa.Column('is_active', sa.Boolean(), nullable=False, server_default='1'),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text("(datetime('now'))")),
         sa.ForeignKeyConstraint(['plan_id'], ['subscription_plans.id'], name='users_plan_id_fkey')
     )
 
@@ -53,8 +53,8 @@ def upgrade():
         sa.Column('user_id', sa.BigInteger(), nullable=False),
         sa.Column('input_image_id', sa.BigInteger(), nullable=False),
         sa.Column('index_type', sa.String(length=10), nullable=False),
-        sa.Column('status', sa.String(length=10), nullable=False, server_default=sa.text("'QUEUED'::character varying")),
-        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
+        sa.Column('status', sa.String(length=10), nullable=False, server_default="'QUEUED'"),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text("(datetime('now'))")),
         sa.ForeignKeyConstraint(['input_image_id'], ['input_images.id'], name='processing_runs_input_image_id_fkey'),
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], name='processing_runs_user_id_fkey')
     )
@@ -65,7 +65,7 @@ def upgrade():
         sa.Column('processing_run_id', sa.BigInteger(), nullable=False),
         sa.Column('artifact_type', sa.String(length=20), nullable=False),
         sa.Column('storage_path', sa.Text(), nullable=False),
-        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('now()')),
+        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text("(datetime('now'))")),
         sa.ForeignKeyConstraint(['processing_run_id'], ['processing_runs.id'], name='output_artifacts_processing_run_id_fkey')
     )
 

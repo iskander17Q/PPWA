@@ -1,18 +1,25 @@
 {% extends 'layout/base.html' %}
 {% block content %}
 <div class="card">
-  <h3>Report</h3>
-  {% if meta %}
-  <p>Report ID: {{ report_id }}</p>
-  <table class="metrics">
-    <tr><th>Metric</th><th>Value</th></tr>
-    {% for k, v in meta.metrics.items() %}
-    <tr><td>{{ k }}</td><td>{{ "{:.2f}".format(v) if v is number else v }}</td></tr>
-    {% endfor %}
-  </table>
-  <p><a class="btn" href="/">Home</a> <a class="btn primary" href="{{ '/reports/report_' + report_id + '.pdf' }}">Download PDF</a></p>
-  {% else %}
-  <div class="alert error">Report not found.</div>
-  {% endif %}
+    <h3>Report</h3>
+    {% if meta %}
+    <p>Report ID: {{ report_id }}</p>
+    <table class="metrics">
+        <tr>
+            <th>Metric</th>
+            <th>Value</th>
+        </tr>
+        {% for k, v in meta.metrics.items() %}
+        <tr>
+            <td>{{ k }}</td>
+            <td>{{ "{:.2f}".format(v) if v is number else v }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <p><a class="btn" href="/">Home</a> <a class="btn primary"
+            href="{{ '/reports/report_' + report_id + '.pdf' }}">Download PDF</a></p>
+    {% else %}
+    <div class="alert error">Report not found.</div>
+    {% endif %}
 </div>
 {% endblock %}

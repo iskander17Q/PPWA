@@ -54,6 +54,10 @@ app.include_router(analyze_ui_controller.router)
 from app.controllers import auth_controller
 app.include_router(auth_controller.router)
 
+# Plans controller
+from app.controllers import plans_controller
+app.include_router(plans_controller.router)
+
 # Static files
 from fastapi.staticfiles import StaticFiles
 import os
@@ -89,11 +93,15 @@ class AttachUserAndProtectUIMiddleware(BaseHTTPMiddleware):
             user_id = None
             if cookie_val:
                 try:
-                    from itsdangerous import URLSafeSerializer, BadSignature
-                    s = URLSafeSerializer(SECRET_KEY, salt="starlette.sessions")
-                    data = s.loads(cookie_val)
-                    if isinstance(data, dict):
-                        user_id = data.get('user_id')
+                    # SessionMiddleware uses itsdangerous.TimestampSigner over a b64-encoded JSON payload
+                    from itsdangerous import TimestampSigner, BadSignature
+                    import json
+                    from base64 import b64decode
+                    s = TimestampSigner(SECRET_KEY)
+                    unsigned = s.unsign(cookie_val.encode('utf-8'))
+                    payload = json.loads(b64decode(unsigned))
+                    if isinstance(payload, dict):
+                        user_id = payload.get('user_id')
                 except Exception:
                     # Can't decode cookie; fallback to request.session if available
                     try:
@@ -117,8 +125,14 @@ class AttachUserAndProtectUIMiddleware(BaseHTTPMiddleware):
         # Attach full user from db to request.state for templates
         try:
             db = SessionLocal()
-            user = db.get(User, user_id)
+            from sqlalchemy.orm import joinedload
+            user = db.query(User).options(joinedload(User.plan)).filter(User.id == user_id).first()
             print("DEBUG: resolved user from db:", user)
+            # Access related objects while session is open to load them
+            if user and user.plan:
+                _ = user.plan.name  # Trigger eager load
+            # Expunge user from session so it can be used after session closes
+            db.expunge(user)
             request.state.user = user
         finally:
             db.close()

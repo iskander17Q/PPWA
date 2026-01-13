@@ -1,44 +1,44 @@
 {% extends "users/base.html" %}
 {% block users_content %}
-    <div style="display:flex; justify-content: space-between; align-items:center;">
-        <h2 style="margin:0;">Пользователь #{{ user.id }}</h2>
-        <div class="actions">
-            <a href="/users/{{ user.id }}/edit">Редактировать</a>
-            <a href="/users">Назад к списку</a>
-        </div>
+<div style="display:flex; justify-content: space-between; align-items:center;">
+    <h2 style="margin:0;">Пользователь #{{ user.id }}</h2>
+    <div class="actions">
+        <a href="/users/{{ user.id }}/edit">Редактировать</a>
+        <a href="/users">Назад к списку</a>
     </div>
-    <div class="meta">
-        <div class="item">
-            <strong>Email</strong><br>
-            {{ user.email }}
-        </div>
-        <div class="item">
-            <strong>Имя</strong><br>
-            {{ user.name or "—" }}
-        </div>
-        <div class="item">
-            <strong>Телефон</strong><br>
-            {{ user.phone or "—" }}
-        </div>
-        <div class="item">
-            <strong>Роль</strong><br>
-            <span class="badge">{{ user.role }}</span>
-        </div>
-        <div class="item">
-            <strong>Тариф</strong><br>
-            {{ user.plan.name if user.plan else "—" }}
-        </div>
-        <div class="item">
-            <strong>Активен</strong><br>
-            {{ "Да" if user.is_active else "Нет" }}
-        </div>
-        <div class="item">
-            <strong>Попыток использовано</strong><br>
-            {{ user.free_attempts_used }}
-        </div>
-        <div class="item">
-            <strong>Создан</strong><br>
-            {{ user.created_at.strftime("%Y-%m-%d %H:%M") if user.created_at else "—" }}
-        </div>
+</div>
+<div class="meta">
+    <div class="item">
+        <strong>Email</strong><br>
+        {{ user.email }}
     </div>
+    <div class="item">
+        <strong>Имя</strong><br>
+        {{ user.name or "—" }}
+    </div>
+    <div class="item">
+        <strong>Телефон</strong><br>
+        {{ user.phone or "—" }}
+    </div>
+    <div class="item">
+        <strong>Роль</strong><br>
+        <span class="badge">{{ user.role }}</span>
+    </div>
+    <div class="item">
+        <strong>Тариф</strong><br>
+        {{ user.plan.name if user.plan else "—" }}
+    </div>
+    <div class="item">
+        <strong>Активен</strong><br>
+        {{ "Да" if user.is_active else "Нет" }}
+    </div>
+    <div class="item">
+        <strong>Попыток использовано</strong><br>
+        {{ user.free_attempts_used }}
+    </div>
+    <div class="item">
+        <strong>Создан</strong><br>
+        {{ user.created_at.strftime("%Y-%m-%d %H:%M") if user.created_at else "—" }}
+    </div>
+</div>
 {% endblock %}

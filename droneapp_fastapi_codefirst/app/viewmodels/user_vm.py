@@ -1,13 +1,14 @@
 import datetime
+import re
 from typing import Optional, Literal
 
 from fastapi import Form
-from pydantic import BaseModel, EmailStr, ValidationError, validator
+from pydantic import BaseModel, ValidationError, validator
 
 
 class UserViewModel(BaseModel):
     id: Optional[int] = None
-    email: EmailStr
+    email: str
     name: Optional[str] = None
     phone: Optional[str] = None
     role: Literal["USER", "ADMIN"]
@@ -15,6 +16,17 @@ class UserViewModel(BaseModel):
     is_active: bool = True
     created_at: Optional[datetime.datetime] = None
     free_attempts_used: int = 0
+
+    @validator("email", pre=True)
+    def validate_email(cls, value):
+        if not value:
+            raise ValueError("Email обязателен для заполнения")
+        value = str(value).strip()
+        # More lenient email validation that allows .local domains
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, value):
+            raise ValueError("Неверный формат email")
+        return value
 
     @validator("name", "phone", pre=True)
     def empty_to_none(cls, value):

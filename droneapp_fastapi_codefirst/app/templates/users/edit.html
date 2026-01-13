@@ -1,13 +1,20 @@
 {% extends "users/base.html" %}
 {% block users_content %}
-    <h2 style="margin-top:0;">Редактировать пользователя #{{ form_data.id }}</h2>
+<div class="page-header">
+    <h1>Редактировать пользователя</h1>
+    <p class="muted">ID: #{{ form_data.id }}</p>
+</div>
 
-    {% if errors and errors|length %}
-        <div class="errors">
-            {% for err in errors %}<div>{{ err }}</div>{% endfor %}
-        </div>
-    {% endif %}
+{% if errors and errors|length %}
+<div class="alert error">
+    <span>⚠️</span>
+    <div>
+        {% for err in errors %}<div>{{ err }}</div>{% endfor %}
+    </div>
+</div>
+{% endif %}
 
+<div class="card">
     <form method="post">
         <div class="field">
             <label for="email">Email *</label>
@@ -19,37 +26,56 @@
         </div>
         <div class="field">
             <label for="phone">Телефон</label>
-            <input type="text" id="phone" name="phone" value="{{ form_data.phone or '' }}">
+            <input type="tel" id="phone" name="phone" value="{{ form_data.phone or '' }}">
         </div>
         <div class="field">
             <label for="role">Роль *</label>
             <select id="role" name="role" required>
-                <option value="USER" {% if form_data.role == 'USER' %}selected{% endif %}>USER</option>
-                <option value="ADMIN" {% if form_data.role == 'ADMIN' %}selected{% endif %}>ADMIN</option>
+                <option value="USER" {% if form_data.role=='USER' %}selected{% endif %}>USER</option>
+                <option value="ADMIN" {% if form_data.role=='ADMIN' %}selected{% endif %}>ADMIN</option>
             </select>
         </div>
         <div class="field">
             <label for="plan_id">Тариф *</label>
             <select id="plan_id" name="plan_id" required>
                 {% for plan in plans %}
-                    <option value="{{ plan.id }}" {% if form_data.plan_id == plan.id %}selected{% endif %}>{{ plan.name }}</option>
+                <option value="{{ plan.id }}" {% if form_data.plan_id==plan.id %}selected{% endif %}>{{ plan.name }}
+                </option>
                 {% endfor %}
             </select>
         </div>
-        <div class="field checkbox">
+        <div class="field" style="display: flex; align-items: center; gap: 8px; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
             <input type="checkbox" id="is_active" name="is_active" value="true" {% if form_data.is_active %}checked{% endif %}>
-            <label for="is_active" style="margin:0;">Активен</label>
+            <label for="is_active" style="margin:0; cursor: pointer;">Активен</label>
         </div>
 
-        <div class="field">
-            <label>Чтение</label>
-            <div class="meta">
-                <div class="item"><strong>ID</strong><br>{{ form_data.id }}</div>
-                <div class="item"><strong>Создан</strong><br>{{ form_data.created_at.strftime("%Y-%m-%d %H:%M") if form_data.created_at else "—" }}</div>
-                <div class="item"><strong>Попыток использовано</strong><br>{{ form_data.free_attempts_used }}</div>
+        <div class="field" style="margin-top: 24px; padding-top: 24px; border-top: 2px solid var(--border-color);">
+            <label style="color: var(--text-secondary); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Информация только для чтения</label>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 12px;">
+                <div style="padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">ID</div>
+                    <div style="font-weight: 600; font-size: 16px;">{{ form_data.id }}</div>
+                </div>
+                <div style="padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">Создан</div>
+                    <div style="font-weight: 600; font-size: 14px;">{{ form_data.created_at.strftime("%Y-%m-%d %H:%M") if form_data.created_at else "—" }}</div>
+                </div>
+                <div style="padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 4px;">Попыток использовано</div>
+                    <div style="font-weight: 600; font-size: 16px; color: var(--primary);">{{ form_data.free_attempts_used }}</div>
+                </div>
             </div>
         </div>
-        <button type="submit" class="btn">Сохранить</button>
-        <a class="btn" style="background:#6b7280; margin-left:8px;" href="/users/{{ form_data.id }}">Отмена</a>
+        
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="submit" class="btn primary" style="flex: 1;">
+                <span>💾</span>
+                <span>Сохранить изменения</span>
+            </button>
+            <a class="btn" href="/users/{{ form_data.id }}" style="background: var(--text-secondary);">
+                <span>Отмена</span>
+            </a>
+        </div>
     </form>
+</div>
 {% endblock %}

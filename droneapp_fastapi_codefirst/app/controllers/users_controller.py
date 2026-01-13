@@ -79,10 +79,62 @@ async def users_create_post(request: Request, db: Session = Depends(get_db)):
         )
 
     try:
-        payload["plan_id"] = int(payload["plan_id"]) if payload["plan_id"] not in (None, "") else None
+        # Convert plan_id to int, handling string input
+        plan_id_str = payload.get("plan_id")
+        if plan_id_str is not None and plan_id_str != "":
+            try:
+                payload["plan_id"] = int(plan_id_str)
+            except (ValueError, TypeError):
+                errors.append(f"Неверный формат тарифа: '{plan_id_str}'. Ожидается число.")
+                return templates.TemplateResponse(
+                    "users/create.html",
+                    {
+                        "request": request,
+                        "plans": plans,
+                        "plan_missing": False,
+                        "form_data": UserViewModel.construct(**payload),
+                        "errors": errors,
+                    },
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            errors.append("Тариф обязателен для заполнения.")
+            return templates.TemplateResponse(
+                "users/create.html",
+                {
+                    "request": request,
+                    "plans": plans,
+                    "plan_missing": False,
+                    "form_data": UserViewModel.construct(**payload),
+                    "errors": errors,
+                },
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        
+        # Validate with Pydantic
         form_data = UserViewModel(**payload)
-    except (ValidationError, ValueError):
-        errors.append("Проверьте корректность введённых данных (email/role/plan).")
+    except ValidationError as e:
+        # Extract detailed validation errors
+        for error in e.errors():
+            field = error.get("loc", ["unknown"])[0]
+            msg = error.get("msg", "Ошибка валидации")
+            errors.append(f"Поле '{field}': {msg}")
+        # Also add generic message
+        if not errors:
+            errors.append("Проверьте корректность введённых данных (email/role/plan).")
+        return templates.TemplateResponse(
+            "users/create.html",
+            {
+                "request": request,
+                "plans": plans,
+                "plan_missing": False,
+                "form_data": UserViewModel.construct(**payload),
+                "errors": errors,
+            },
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    except (ValueError, TypeError) as e:
+        errors.append(f"Ошибка обработки данных: {str(e)}")
         return templates.TemplateResponse(
             "users/create.html",
             {
@@ -98,7 +150,23 @@ async def users_create_post(request: Request, db: Session = Depends(get_db)):
     try:
         accessor.create_user(form_data.dict())
     except ValueError as exc:
-        errors.append(str(exc))
+        error_msg = str(exc)
+        errors.append(error_msg)
+        
+        # If user already exists, try to find them and suggest editing
+        existing_user = None
+        if "уже существует" in error_msg.lower() or "already exists" in error_msg.lower():
+            # Try to extract user ID from error message or search by email
+            import re
+            id_match = re.search(r'ID:\s*(\d+)', error_msg)
+            if id_match:
+                user_id = int(id_match.group(1))
+                existing_user = accessor.get_user(user_id)
+            else:
+                # Fallback: search by email (normalized)
+                email_normalized = str(form_data.email).strip().lower()
+                existing_user = accessor.get_user_by_email(email_normalized)
+        
         return templates.TemplateResponse(
             "users/create.html",
             {
@@ -107,6 +175,7 @@ async def users_create_post(request: Request, db: Session = Depends(get_db)):
                 "plan_missing": False,
                 "form_data": form_data,
                 "errors": errors,
+                "existing_user": existing_user,
             },
             status_code=status.HTTP_400_BAD_REQUEST,
         )
@@ -165,10 +234,47 @@ async def user_edit_post(user_id: int, request: Request, db: Session = Depends(g
     }
 
     try:
-        payload["plan_id"] = int(payload["plan_id"]) if payload["plan_id"] not in (None, "") else None
+        # Convert plan_id to int, handling string input
+        plan_id_str = payload.get("plan_id")
+        if plan_id_str is not None and plan_id_str != "":
+            try:
+                payload["plan_id"] = int(plan_id_str)
+            except (ValueError, TypeError):
+                errors.append(f"Неверный формат тарифа: '{plan_id_str}'. Ожидается число.")
+                payload["plan_id"] = user.plan_id  # Fallback to current plan
+        else:
+            errors.append("Тариф обязателен для заполнения.")
+            payload["plan_id"] = user.plan_id  # Fallback to current plan
+        
+        # Validate with Pydantic
         form_data = UserViewModel(**payload)
-    except (ValidationError, ValueError):
-        errors.append("Проверьте корректность введённых данных (email/role/plan).")
+    except ValidationError as e:
+        # Extract detailed validation errors
+        for error in e.errors():
+            field = error.get("loc", ["unknown"])[0]
+            msg = error.get("msg", "Ошибка валидации")
+            errors.append(f"Поле '{field}': {msg}")
+        # Also add generic message
+        if not errors:
+            errors.append("Проверьте корректность введённых данных (email/role/plan).")
+        return templates.TemplateResponse(
+            "users/edit.html",
+            {
+                "request": request,
+                "plans": plans,
+                "form_data": UserViewModel.construct(
+                    id=user.id,
+                    created_at=user.created_at,
+                    free_attempts_used=user.free_attempts_used,
+                    **payload,
+                ),
+                "errors": errors,
+                "user_id": user_id,
+            },
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    except (ValueError, TypeError) as e:
+        errors.append(f"Ошибка обработки данных: {str(e)}")
         return templates.TemplateResponse(
             "users/edit.html",
             {
@@ -192,7 +298,19 @@ async def user_edit_post(user_id: int, request: Request, db: Session = Depends(g
     form_data.free_attempts_used = user.free_attempts_used
 
     try:
-        accessor.update_user(user_id, form_data.dict())
+        updated_user = accessor.update_user(user_id, form_data.dict())
+        # If current user updated their own plan, refresh session data
+        if hasattr(request.state, 'user') and request.state.user and request.state.user.id == user_id:
+            # Reload user with plan relationship for session
+            from sqlalchemy.orm import joinedload
+            from app.models.models import User as UserModel
+            refreshed_user = db.query(UserModel).options(joinedload(UserModel.plan)).filter(UserModel.id == user_id).first()
+            if refreshed_user:
+                # Access plan to trigger eager load before session closes
+                if refreshed_user.plan:
+                    _ = refreshed_user.plan.name
+                db.expunge(refreshed_user)
+                request.state.user = refreshed_user
     except ValueError as exc:
         errors.append(str(exc))
         return templates.TemplateResponse(

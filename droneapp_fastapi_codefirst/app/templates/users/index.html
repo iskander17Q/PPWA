@@ -1,47 +1,69 @@
 {% extends "users/base.html" %}
 {% block users_content %}
-    <h2 style="margin-top: 0;">Пользователи</h2>
-    {% if plan_missing %}
-    <div class="alert">Нет тарифных планов. Создайте хотя бы один план, чтобы добавлять пользователей.</div>
-    {% endif %}
-    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <p class="muted" style="margin:0;">Всего: {{ users|length }}</p>
-        <a class="btn" href="/users/create" {% if plan_missing %}disabled{% endif %}>Новый пользователь</a>
+<div class="page-header">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1 style="margin: 0;">Пользователи</h1>
+            <p class="muted" style="margin: 8px 0 0 0;">Управление пользователями системы</p>
+        </div>
+        <a class="btn primary" href="/users/create" {% if plan_missing %}style="opacity: 0.5; pointer-events: none;"{% endif %}>
+            <span>➕</span>
+            <span>Новый пользователь</span>
+        </a>
     </div>
+</div>
 
-    {% if users %}
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Email</th>
-                <th>Имя</th>
-                <th>Роль</th>
-                <th>Тариф</th>
-                <th>Активен</th>
-                <th>Создан</th>
-                <th>Действия</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in users %}
-            <tr>
-                <td>{{ user.id }}</td>
-                <td>{{ user.email }}</td>
-                <td>{{ user.name or "—" }}</td>
-                <td><span class="badge">{{ user.role }}</span></td>
-                <td>{{ user.plan.name if user.plan else "—" }}</td>
-                <td>{{ "Да" if user.is_active else "Нет" }}</td>
-                <td>{{ user.created_at.strftime("%Y-%m-%d %H:%M") if user.created_at else "—" }}</td>
-                <td class="actions">
-                    <a href="/users/{{ user.id }}">Детали</a>
-                    <a href="/users/{{ user.id }}/edit">Редактировать</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-        <p class="muted">Пользователи не найдены.</p>
-    {% endif %}
+{% if plan_missing %}
+<div class="alert error">
+    <span>⚠️</span>
+    <span>Нет тарифных планов. Создайте хотя бы один план, чтобы добавлять пользователей.</span>
+</div>
+{% endif %}
+
+{% if users %}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Email</th>
+            <th>Имя</th>
+            <th>Роль</th>
+            <th>Тариф</th>
+            <th>Активен</th>
+            <th>Создан</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.name or "—" }}</td>
+            <td><span class="badge {{ user.role }}">{{ user.role }}</span></td>
+            <td>
+                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                    <span>💎</span>
+                    <strong>{{ user.plan.name if user.plan else "—" }}</strong>
+                </span>
+            </td>
+            <td>
+                {% if user.is_active %}
+                <span style="color: var(--success); font-weight: 600;">✓ Активен</span>
+                {% else %}
+                <span style="color: var(--text-muted);">✗ Неактивен</span>
+                {% endif %}
+            </td>
+            <td>{{ user.created_at.strftime("%Y-%m-%d %H:%M") if user.created_at else "—" }}</td>
+            <td class="actions">
+                <a href="/users/{{ user.id }}">Детали</a>
+                <a href="/users/{{ user.id }}/edit">Редактировать</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="muted">Пользователи не найдены.</p>
+{% endif %}
 {% endblock %}

@@ -1,52 +1,76 @@
 <!doctype html>
 <html lang="ru">
-  <head>
+
+<head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{ title or 'DroneAPP' }}</title>
     <link rel="stylesheet" href="/static/styles.css" />
-  </head>
-  <body>
+</head>
+
+<body>
     <div class="app-shell">
-      <aside class="sidebar">
-        <div class="brand">DroneApp</div>
-        <div class="user-mini">
-          {% if request.state.user %}
-          <div class="small">Вы вошли как:</div>
-          <div class="bold">{{ request.state.user.email }}</div>
-          <div class="muted">Тариф: {{ request.state.user.plan.name if request.state.user.plan else '—' }}</div>
-          {% set limit = (request.state.user.plan.free_attempts_limit if request.state.user.plan and request.state.user.plan.free_attempts_limit is not none else (2 if request.state.user.plan and request.state.user.plan.name == 'Free' else 999)) %}
-          <div class="muted">Осталось попыток: {{ limit - (request.state.user.free_attempts_used or 0) }}</div>
-          {% else %}
-          <div class="muted">Не вошли</div>
-          {% endif %}
-        </div>
+        <aside class="sidebar">
+            <div class="brand">DroneApp</div>
+            <div class="user-mini">
+                {% if request.state.user %}
+                <div class="small">Вы вошли как:</div>
+                <div class="bold">{{ request.state.user.email }}</div>
+                <div class="muted">Тариф: {{ request.state.user.plan.name if request.state.user.plan else '—' }}</div>
+                {% set limit = (request.state.user.plan.free_attempts_limit if request.state.user.plan and
+                request.state.user.plan.free_attempts_limit is not none else (2 if request.state.user.plan and
+                request.state.user.plan.name == 'Free' else 999)) %}
+                <div class="muted">Осталось попыток: {{ limit - (request.state.user.free_attempts_used or 0) }}</div>
+                {% else %}
+                <div class="muted">Не вошли</div>
+                {% endif %}
+            </div>
 
-        <nav class="menu">
-          {% set p = request.url.path %}
-          <a class="menu-item {{ 'active' if p.startswith('/app/dashboard') }}" href="/app/dashboard">Dashboard</a>
-          <a class="menu-item {{ 'active' if p.startswith('/app/analyze') }}" href="/app/analyze">Analyze Photo</a>
-          <a class="menu-item {{ 'active' if p.startswith('/app/reports') }}" href="/app/reports">Reports</a>
-          <a class="menu-item {{ 'active' if p.startswith('/runs') }}" href="/runs">Processing Runs</a>
-          <a class="menu-item {{ 'active' if p.startswith('/users') }}" href="/users">Users</a>
-          <a class="menu-item {{ 'active' if p.startswith('/plans') }}" href="/plans">Plans</a>
-        </nav>
+            <nav class="menu">
+                {% set p = request.url.path %}
+                <a class="menu-item {{ 'active' if p.startswith('/app/dashboard') }}"
+                    href="/app/dashboard">
+                    <span>📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a class="menu-item {{ 'active' if p.startswith('/app/analyze') }}" href="/app/analyze">
+                    <span>🔍</span>
+                    <span>Analyze Photo</span>
+                </a>
+                <a class="menu-item {{ 'active' if p.startswith('/app/reports') }}" href="/app/reports">
+                    <span>📄</span>
+                    <span>Reports</span>
+                </a>
+                <a class="menu-item {{ 'active' if p.startswith('/runs') }}" href="/runs">
+                    <span>⚙️</span>
+                    <span>Processing Runs</span>
+                </a>
+                <a class="menu-item {{ 'active' if p.startswith('/users') }}" href="/users">
+                    <span>👥</span>
+                    <span>Users</span>
+                </a>
+                <a class="menu-item {{ 'active' if p.startswith('/plans') }}" href="/plans">
+                    <span>💎</span>
+                    <span>Plans</span>
+                </a>
+            </nav>
 
-        <div class="sidebar-footer">
-          <form method="post" action="/auth/logout">
-            <button class="btn" type="submit">Logout</button>
-          </form>
-        </div>
-      </aside>
-      <main class="content">
-        <header class="topbar">
-          <h2>{{ page_title or '' }}</h2>
-        </header>
+            <div class="sidebar-footer">
+                <form method="post" action="/auth/logout">
+                    <button class="btn" type="submit">Logout</button>
+                </form>
+            </div>
+        </aside>
+        <main class="content">
+            <header class="topbar">
+                <h2>{{ page_title or '' }}</h2>
+            </header>
 
-        <div class="container">
-          {% block content %}{% endblock %}
-        </div>
-      </main>
+            <div class="container">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
     </div>
-  </body>
+</body>
+
 </html>

@@ -1,0 +1,38 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<div class="page-header">
+    <h1>Тарифные планы</h1>
+</div>
+
+<div class="plans-grid">
+    {% for plan in plans %}
+    <div class="plan-card">
+        <div class="plan-header">
+            <h3>{{ plan.name }}</h3>
+            <div class="plan-badge {% if plan.name == 'Pro' %}badge-pro{% else %}badge-free{% endif %}">
+                {{ plan.name }}
+            </div>
+        </div>
+        <div class="plan-content">
+            <div class="plan-feature">
+                <span class="feature-icon">📊</span>
+                <div>
+                    <strong>Лимит попыток:</strong>
+                    <span class="feature-value">
+                        {% if plan.free_attempts_limit >= 999999 %}
+                        Безлимит
+                        {% else %}
+                        {{ plan.free_attempts_limit }}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="plan-stats">
+                <span class="stat-label">Пользователей:</span>
+                <span class="stat-value">{{ plan_stats.get(plan.id, 0) }}</span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

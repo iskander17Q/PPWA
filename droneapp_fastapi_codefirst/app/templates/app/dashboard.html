@@ -1,17 +1,59 @@
 {% extends 'layout/base.html' %}
 {% block content %}
+<div class="page-header">
+    <h1>Dashboard</h1>
+    <p class="muted">Обзор системы и статистика</p>
+</div>
+
 <div class="grid">
-  <div class="card">
-    <h4>Plan</h4>
-    <p class="muted">{{ request.state.user.plan.name if request.state.user.plan else '—' }}</p>
-    <p>Remaining attempts: {{ (request.state.user.plan.free_attempts_limit if request.state.user.plan and request.state.user.plan.free_attempts_limit is not none else 2) - (request.state.user.free_attempts_used or 0) }}</p>
-    <p><a class="btn primary" href="/app/analyze">Analyze Photo</a></p>
-  </div>
-  <div class="card">
-    <h4>Totals</h4>
-    <p>Users: {{ total_users }}</p>
-    <p>Processing runs: {{ total_runs }}</p>
-    <p>Reports: {{ total_reports }}</p>
-  </div>
+    <div class="card">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <span style="font-size: 32px;">💎</span>
+            <div>
+                <h4 style="margin: 0;">Ваш тариф</h4>
+                <p class="muted" style="margin: 4px 0 0 0; font-size: 14px;">Текущий план подписки</p>
+            </div>
+        </div>
+        <div style="padding: 16px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; margin-bottom: 16px;">
+            <div style="font-size: 24px; font-weight: 700; color: #0369a1; margin-bottom: 4px;">
+                {{ request.state.user.plan.name if request.state.user.plan else '—' }}
+            </div>
+            <div style="font-size: 14px; color: #0c4a6e;">
+                {% set limit = (request.state.user.plan.free_attempts_limit if request.state.user.plan and
+                request.state.user.plan.free_attempts_limit is not none else (2 if request.state.user.plan and
+                request.state.user.plan.name == 'Free' else 999)) %}
+                {% set remaining = limit - (request.state.user.free_attempts_used or 0) %}
+                Осталось попыток: <strong>{{ remaining }}</strong> из {{ limit if limit < 999 else '∞' }}
+            </div>
+        </div>
+        <a class="btn primary" href="/app/analyze" style="width: 100%; justify-content: center;">
+            <span>🔍</span>
+            <span>Начать анализ</span>
+        </a>
+    </div>
+    
+    <div class="card">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+            <span style="font-size: 32px;">📊</span>
+            <div>
+                <h4 style="margin: 0;">Статистика</h4>
+                <p class="muted" style="margin: 4px 0 0 0; font-size: 14px;">Общие показатели системы</p>
+            </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                <span style="color: var(--text-secondary);">👥 Пользователи:</span>
+                <strong style="font-size: 20px; color: var(--primary);">{{ total_users }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                <span style="color: var(--text-secondary);">⚙️ Обработок:</span>
+                <strong style="font-size: 20px; color: var(--primary);">{{ total_runs }}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                <span style="color: var(--text-secondary);">📄 Отчётов:</span>
+                <strong style="font-size: 20px; color: var(--primary);">{{ total_reports }}</strong>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
