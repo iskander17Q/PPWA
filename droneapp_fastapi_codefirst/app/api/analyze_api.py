@@ -2,9 +2,12 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from fastapi.responses import JSONResponse
 import os
 import uuid
+import logging
 from typing import Dict
 from app.services.rgb_analyzer import analyze_image
 from app.services.pdf_report import generate_pdf
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -34,6 +37,8 @@ async def analyze(
     current_user = Depends(get_current_user_api),
     db: Session = Depends(get_db),
 ):
+    logger.info(f"scan started user_id={current_user.id}")
+    
     # Basic validation
     if file.content_type.split('/')[0] != 'image':
         raise HTTPException(status_code=400, detail='Uploaded file is not an image')
@@ -71,6 +76,7 @@ async def analyze(
         metrics, assets = analyze_image(upload_path, TEMP_DIR)
     except Exception as e:
         db.rollback()
+        logger.exception(f"scan failed user_id={current_user.id}")
         raise HTTPException(status_code=500, detail=f'Error analysing image: {e}')
 
     report_id = uuid.uuid4().hex
@@ -89,6 +95,7 @@ async def analyze(
         generate_pdf(report_path, meta, assets, upload_path)
     except Exception as e:
         db.rollback()
+        logger.exception(f"scan failed user_id={current_user.id}")
         raise HTTPException(status_code=500, detail=f'Error generating PDF: {e}')
 
     # Create ProcessingRun record
@@ -106,9 +113,10 @@ async def analyze(
     
     try:
         db.commit()
-        print(f"INFO: Created ProcessingRun ID={processing_run.id} and InputImage ID={input_image.id} for user_id={current_user.id}")
+        logger.info(f"scan finished status=SUCCESS report={report_id} user_id={current_user.id}")
     except Exception as e:
         db.rollback()
+        logger.exception(f"scan failed user_id={current_user.id}")
         print(f"ERROR: Failed to save ProcessingRun and InputImage: {e}")
         # Continue anyway - the report was generated
 

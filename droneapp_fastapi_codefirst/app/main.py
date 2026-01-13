@@ -6,6 +6,10 @@ from sqlalchemy.orm import Session
 from app.accessors.users_accessor import UsersAccessor
 from app.accessors.runs_accessor import RunsAccessor
 from .controllers import users_controller, runs_controller
+from app.logging_config import setup_logging
+
+# Настройка логирования при старте приложения
+setup_logging()
 
 app = FastAPI(title='DroneApp CodeFirst Lab 6 - MVC complex')
 app.include_router(users_controller.router)
