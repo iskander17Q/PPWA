@@ -72,3 +72,4 @@ class OutputArtifact(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
 
     processing_run = relationship('ProcessingRun', back_populates='output_artifacts')
+
