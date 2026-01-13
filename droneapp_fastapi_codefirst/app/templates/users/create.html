@@ -1,6 +1,5 @@
 {% extends "users/base.html" %}
-{% block content %}
-<div class="card">
+{% block users_content %}
     <h2 style="margin-top:0;">Создать пользователя</h2>
 
     {% if errors and errors|length %}
@@ -60,5 +59,4 @@
             <button type="submit" class="btn">Сохранить</button>
         </fieldset>
     </form>
-</div>
 {% endblock %}

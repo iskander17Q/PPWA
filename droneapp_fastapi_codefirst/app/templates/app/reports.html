@@ -1,0 +1,17 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<div class="card">
+  <h3>Reports</h3>
+  <table class="metrics">
+    <tr><th>Report</th><th>Score</th><th>Coverage</th><th></th></tr>
+    {% for r in reports %}
+    <tr>
+      <td>{{ r.filename }}</td>
+      <td>{{ "{:.2f}".format(r.metrics.health_score) if r.metrics is defined else '-' }}</td>
+      <td>{{ "{:.2f}".format(r.metrics.vegetation_coverage_percent) if r.metrics is defined else '-' }}</td>
+      <td><a class="btn" href="/reports/{{ r.filename }}">Download</a></td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+{% endblock %}

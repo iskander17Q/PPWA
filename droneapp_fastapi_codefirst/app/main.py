@@ -41,6 +41,93 @@ def get_users(db: Session = Depends(get_db)):
 from app.api.routes import runs_api
 app.include_router(runs_api.router)
 
+# Lab8 analyze API + UI
+from app.api import analyze_api
+from app.controllers import analyze_ui_controller, users_controller, runs_controller
+from app.controllers import analyze_ui_controller
+from app.controllers import users_controller
+
+app.include_router(analyze_api.router)
+app.include_router(analyze_ui_controller.router)
+
+# Auth controllers
+from app.controllers import auth_controller
+app.include_router(auth_controller.router)
+
+# Static files
+from fastapi.staticfiles import StaticFiles
+import os
+app_dir = os.path.dirname(__file__)
+static_dir = os.path.join(app_dir, 'static')
+app.mount('/static', StaticFiles(directory=static_dir), name='static')
+
+# Session middleware
+from starlette.middleware.sessions import SessionMiddleware
+import os as _os
+SECRET_KEY = _os.getenv('APP_SECRET_KEY') or 'dev-secret-key-change-me'
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
+
+# Simple middleware: attach current user to request.state for templates and enforce UI login
+from starlette.responses import RedirectResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from app.deps.auth import get_user_from_session
+from app.db import SessionLocal
+from app.models.models import User
+
+class AttachUserAndProtectUIMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        path = request.url.path
+        # Skip auth/static/api endpoints
+        if path.startswith('/auth') or path.startswith('/static') or path.startswith('/api'):
+            return await call_next(request)
+
+        # Try to read user_id from session cookie directly (do not rely on Request.session availability)
+        try:
+            print("DEBUG: request.cookies:", request.cookies)
+            cookie_val = request.cookies.get('session')
+            print("DEBUG: session_cookie:", cookie_val)
+            user_id = None
+            if cookie_val:
+                try:
+                    from itsdangerous import URLSafeSerializer, BadSignature
+                    s = URLSafeSerializer(SECRET_KEY, salt="starlette.sessions")
+                    data = s.loads(cookie_val)
+                    if isinstance(data, dict):
+                        user_id = data.get('user_id')
+                except Exception:
+                    # Can't decode cookie; fallback to request.session if available
+                    try:
+                        user_id = get_user_from_session(request)
+                    except Exception:
+                        user_id = None
+            else:
+                try:
+                    user_id = get_user_from_session(request)
+                except Exception:
+                    user_id = None
+        except Exception:
+            # Any unexpected error while parsing session — treat as not authenticated
+            user_id = None
+
+        if not user_id:
+            # redirect to login for UI pages
+            print("DEBUG: No user_id in session; redirecting to login")
+            return RedirectResponse(url='/auth/login')
+
+        # Attach full user from db to request.state for templates
+        try:
+            db = SessionLocal()
+            user = db.get(User, user_id)
+            print("DEBUG: resolved user from db:", user)
+            request.state.user = user
+        finally:
+            db.close()
+
+        return await call_next(request)
+
+# Register middleware so it runs after SessionMiddleware
+app.add_middleware(AttachUserAndProtectUIMiddleware)
+print("MIDDLEWARE STACK:", [m.cls.__name__ for m in app.user_middleware])
 
 @app.get('/api/users-eager', response_model=List[dict])
 def get_users_eager(db: Session = Depends(get_db)):

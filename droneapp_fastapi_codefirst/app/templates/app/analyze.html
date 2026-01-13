@@ -1,0 +1,62 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<div class="card">
+  <h3>Plant Health — RGB Analysis</h3>
+  <p class="muted">Оценка по RGB индексам ExG и VARI. NDVI будет добавлен позже для мультиспектра.</p>
+  <div class="top-actions"><a class="btn" href="/">Home</a></div>
+
+  <div class="card">
+    <form id="analyzeForm">
+      <label>Field name (optional)</label>
+      <input type="text" name="plot_name" id="plot_name" placeholder="Field A">
+
+      <label>Image file (jpg/png)</label>
+      <input type="file" name="file" id="file" accept="image/*">
+
+      <button id="submitBtn" class="btn primary">Generate PDF report</button>
+    </form>
+    <div id="status" class="status"></div>
+  </div>
+</div>
+
+<script>
+  const form = document.getElementById('analyzeForm');
+  const status = document.getElementById('status');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    status.innerHTML = '';
+    const fileInput = document.getElementById('file');
+    if (!fileInput.files.length) {
+      status.innerHTML = '<div class="alert error">Please select an image file.</div>';
+      return;
+    }
+    const fd = new FormData();
+    fd.append('file', fileInput.files[0]);
+    fd.append('plot_name', document.getElementById('plot_name').value || '');
+    status.innerHTML = '<div class="alert info">Uploading and analyzing...</div>';
+    try {
+      const res = await fetch('/api/analyze', { method: 'POST', body: fd });
+      if (!res.ok) {
+        // handle special 'offer upgrade' response
+        if (res.status === 402) {
+          const j = await res.json().catch(() => null);
+          status.innerHTML = '<div class="alert warning">' + (j && j.message ? j.message : 'Лимит попыток исчерпан.') + ' <a href="/app/upgrade">Перейти к PRO</a></div>';
+          const btn = document.createElement('button');
+          btn.className = 'btn';
+          btn.textContent = 'Перейти к оплате';
+          btn.addEventListener('click', () => { window.location.href = '/app/upgrade'; });
+          status.querySelector('.alert').appendChild(document.createTextNode(' '));
+          status.querySelector('.alert').appendChild(btn);
+          return;
+        }
+        const text = await res.text();
+        throw new Error(text);
+      }
+      const data = await res.json();
+      status.innerHTML = '<div class="alert success">Report ready. <a href="/app/reports/' + data.report_id + '">View report</a></div>';
+    } catch (err) {
+      status.innerHTML = '<div class="alert error">Error: ' + err + '</div>';
+    }
+  });
+</script>
+{% endblock %}

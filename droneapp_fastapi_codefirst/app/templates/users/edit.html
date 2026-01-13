@@ -1,6 +1,5 @@
 {% extends "users/base.html" %}
-{% block content %}
-<div class="card">
+{% block users_content %}
     <h2 style="margin-top:0;">Редактировать пользователя #{{ form_data.id }}</h2>
 
     {% if errors and errors|length %}
@@ -53,5 +52,4 @@
         <button type="submit" class="btn">Сохранить</button>
         <a class="btn" style="background:#6b7280; margin-left:8px;" href="/users/{{ form_data.id }}">Отмена</a>
     </form>
-</div>
 {% endblock %}
