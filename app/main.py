@@ -40,3 +40,59 @@ def get_runs(db: Session = Depends(get_db)):
     accessor = RunsAccessor(db)
     runs = accessor.list_runs()
     return [_serialize_run(r) for r in runs]
+
+
+
+
+
+
+from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, DateTime, func, BigInteger
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from .base import Base
+
+class SubscriptionPlan(Base):
+    __tablename__ = "subscription_plans"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    free_attempts_limit: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[str] = mapped_column(DateTime(), server_default=func.now())
+    users: Mapped[list["User"]] = relationship(back_populates="plan")
+
+class User(Base):
+    __tablename__ = "users"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    name: Mapped[str | None] = mapped_column(String(120))
+    role: Mapped[str] = mapped_column(String(10), nullable=False, default="USER")
+    plan_id: Mapped[int] = mapped_column(ForeignKey("subscription_plans.id"), nullable=False)
+    free_attempts_used: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    phone: Mapped[str | None] = mapped_column(String(30))
+    last_login_at: Mapped[str | None] = mapped_column(DateTime())
+    created_at: Mapped[str] = mapped_column(DateTime(), server_default=func.now())
+
+    plan: Mapped["SubscriptionPlan"] = relationship(back_populates="users")
+    runs: Mapped[list["ProcessingRun"]] = relationship(back_populates="user")  # lazy by default
+
+class ProcessingRun(Base):
+    __tablename__ = "processing_runs"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    index_type: Mapped[str] = mapped_column(String(10), nullable=False)  # NDVI/GNDVI
+    status: Mapped[str] = mapped_column(String(10), nullable=False, default="QUEUED")
+    created_at: Mapped[str] = mapped_column(DateTime(), server_default=func.now())
+    user: Mapped["User"] = relationship(back_populates="runs")
+
+class Report(Base):
+    __tablename__ = "reports"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[int] = mapped_column(ForeignKey("processing_runs.id"), nullable=False)
+    pdf_path: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[str] = mapped_column(DateTime(), server_default=func.now())
+
+
+    psql "postgresql://postgres:postgres@localhost:5432/postgres" -tc \
+"SELECT 1 FROM pg_database WHERE datname='DroneApp_CodeFirst'" | grep -q 1 \
+|| psql "postgresql://postgres:postgres@localhost:5432/postgres" -c \
+"create database \"DroneApp_CodeFirst\";"
