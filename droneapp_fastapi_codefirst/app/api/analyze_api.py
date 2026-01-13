@@ -24,6 +24,7 @@ from fastapi import Depends
 from app.deps.auth import get_current_user_api
 from app.db import get_db
 from sqlalchemy.orm import Session
+from app.models.models import InputImage, ProcessingRun
 
 
 @router.post('/api/analyze')
@@ -57,9 +58,19 @@ async def analyze(
     with open(upload_path, 'wb') as fh:
         fh.write(await file.read())
 
+    # Create InputImage record
+    input_image = InputImage(
+        user_id=current_user.id,
+        filename=filename,
+        storage_path=upload_path,
+    )
+    db.add(input_image)
+    db.flush()  # Get the ID without committing
+
     try:
         metrics, assets = analyze_image(upload_path, TEMP_DIR)
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=f'Error analysing image: {e}')
 
     report_id = uuid.uuid4().hex
@@ -77,12 +88,29 @@ async def analyze(
     try:
         generate_pdf(report_path, meta, assets, upload_path)
     except Exception as e:
+        db.rollback()
         raise HTTPException(status_code=500, detail=f'Error generating PDF: {e}')
+
+    # Create ProcessingRun record
+    processing_run = ProcessingRun(
+        user_id=current_user.id,
+        input_image_id=input_image.id,
+        index_type='NDVI',  # Default index type for analyze API
+        status='SUCCESS',
+    )
+    db.add(processing_run)
 
     # increment user's used attempts
     db.add(current_user)
     current_user.free_attempts_used = (current_user.free_attempts_used or 0) + 1
-    db.commit()
+    
+    try:
+        db.commit()
+        print(f"INFO: Created ProcessingRun ID={processing_run.id} and InputImage ID={input_image.id} for user_id={current_user.id}")
+    except Exception as e:
+        db.rollback()
+        print(f"ERROR: Failed to save ProcessingRun and InputImage: {e}")
+        # Continue anyway - the report was generated
 
     pdf_url = f'/reports/{report_filename}'
     REPORTS_META[report_id] = meta

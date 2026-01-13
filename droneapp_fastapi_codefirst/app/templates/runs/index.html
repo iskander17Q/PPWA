@@ -2,10 +2,7 @@
 {% block users_content %}
 <div class="card">
     <h2 style="margin-top: 0;">Запуски обработки (Processing Runs)</h2>
-    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <p class="muted" style="margin:0;">Всего: {{ runs|length }}</p>
-        <a class="btn" href="/runs/create">Новый run</a>
-    </div>
+    <p class="muted" style="margin: 0 0 12px 0;">Всего: {{ runs|length }}</p>
 
     {% if runs %}
     <table>

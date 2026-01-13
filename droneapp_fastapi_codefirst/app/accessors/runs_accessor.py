@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from typing import List
+import traceback
 from app.models.models import ProcessingRun, User, InputImage
 
 
@@ -41,10 +43,22 @@ class RunsAccessor:
             index_type=data.get("index_type"),
             status=data.get("status", "QUEUED"),
         )
-        self.db.add(run)
-        self.db.commit()
-        self.db.refresh(run)
-        return run
+        try:
+            self.db.add(run)
+            self.db.commit()
+            self.db.refresh(run)
+            print(f"INFO: Successfully created run ID={run.id} for user_id={user.id}")
+            return run
+        except IntegrityError as e:
+            self.db.rollback()
+            print(f"ERROR: IntegrityError when creating run: {e}")
+            traceback.print_exc()
+            raise ValueError(f"Ошибка сохранения: {str(e)}")
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            print(f"ERROR: SQLAlchemyError when creating run: {e}")
+            traceback.print_exc()
+            raise ValueError(f"Ошибка базы данных: {str(e)}")
 
     def list_users(self) -> List[User]:
         return self.db.query(User).order_by(User.id).all()

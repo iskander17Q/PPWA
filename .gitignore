@@ -9,3 +9,5 @@ alembic.ini
 *.backup
 steps_lab5.txt
 steps_lab3.txt
+droneapp_fastapi_codefirst/reports/
+droneapp_fastapi_codefirst/uploads/
