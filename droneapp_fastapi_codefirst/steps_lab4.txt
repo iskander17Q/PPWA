@@ -1,0 +1,34 @@
+Pași pentru Lab 4 — Code First + Alembic (în Python)
+
+1. Am definit modelele SQLAlchemy în `app/models/models.py` (Code First): `SubscriptionPlan`, `User`, `InputImage`, `ProcessingRun`, `OutputArtifact`.
+2. Am initializat configurarea Alembic (`alembic.ini`, `alembic/env.py`) și am conectat `target_metadata` la `app.models.base.Base.metadata` pentru autogenerate.
+3. Am creat prima migrație de schemă (`0001_initial.py`) care creează tabelele necesare; comanda pentru autogenerate (dacă doriți să o rulați):
+   - alembic revision --autogenerate -m "init_YYYY_MM_DD"
+   - alembic upgrade head
+4. Am realizat o a doua migrație de exemplu (`0002_add_user_phone_report.py`) pentru a adăuga coloane noi (`phone`, `last_login_at`), schimba tipul `free_attempts_used` și adăuga un nou model `Report`.
+   - Pentru aplica: alembic revision --autogenerate -m "add_phone_report" && alembic upgrade head
+5. Seed: Am creat `app/seed.py` care inserează planuri (`Free`, `Pro`), un admin și un user, o imagine, o rulare și un artifact.
+   - Rulați `python -m app.seed` după `alembic upgrade` pentru a popula baza.
+6. Am implementat un strat de acces (`accessors`) cu metode:
+   - `UsersAccessor.list_users()` (ordered by id)
+   - `RunsAccessor.list_runs()` (ordered by id desc)
+   - `UsersAccessor.list_users_with_runs_eager()` (folosește `selectinload` pentru eager loading)
+7. Endpoints FastAPI pentru test:
+   - GET /users — listează utilizatorii (basic fields)
+   - GET /runs — listează rulările
+   - GET /users-eager — listează utilizatorii cu `runs_count` (eager loaded)
+   - GET /users-lazy — listează utilizatorii și accesează `processing_runs` pentru fiecare (demonstrând N+1)
+8. Testare console: `scripts/test_console.py` conectează la DB și afișează rândurile din `users`.
+
+Comenzi principale (succint):
+- python3 -m venv .venv
+- source .venv/bin/activate
+- pip install -r requirements.txt
+- psql -U postgres -c "create database \"DroneApp_CodeFirst\";"
+- set -o allexport; source .env; set +o allexport
+- alembic revision --autogenerate -m "init_$(date +%F)"
+- alembic upgrade head
+- python -m app.seed
+- .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+
+Notă: pentru demonstrarea eager vs lazy, folosiți `/users-eager` și `/users-lazy` și monitorizați query count (sau folosiți SQLAlchemy echo).

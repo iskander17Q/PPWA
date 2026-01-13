@@ -1,0 +1,64 @@
+{% extends "users/base.html" %}
+{% block content %}
+<div class="card">
+    <h2 style="margin-top:0;">Создать пользователя</h2>
+
+    {% if errors and errors|length %}
+        <div class="errors">
+            {% for err in errors %}<div>{{ err }}</div>{% endfor %}
+        </div>
+    {% endif %}
+
+    {% if plan_missing %}
+        <div class="alert">Нет тарифных планов. Создайте план, затем добавьте пользователя.</div>
+    {% endif %}
+
+    <form method="post">
+        <fieldset {% if plan_missing %}disabled{% endif %}>
+            <div class="field">
+                <label for="email">Email *</label>
+                <input type="email" id="email" name="email" value="{{ form_data.email if form_data else '' }}" required>
+            </div>
+            <div class="field">
+                <label for="name">Имя</label>
+                <input type="text" id="name" name="name" value="{{ form_data.name if form_data else '' }}">
+            </div>
+            <div class="field">
+                <label for="phone">Телефон</label>
+                <input type="text" id="phone" name="phone" value="{{ form_data.phone if form_data else '' }}">
+            </div>
+            <div class="field">
+                <label for="role">Роль *</label>
+                <select id="role" name="role" required>
+                    {% set current_role = form_data.role if form_data else 'USER' %}
+                    <option value="USER" {% if current_role == 'USER' %}selected{% endif %}>USER</option>
+                    <option value="ADMIN" {% if current_role == 'ADMIN' %}selected{% endif %}>ADMIN</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="plan_id">Тариф *</label>
+                <select id="plan_id" name="plan_id" required>
+                    {% for plan in plans %}
+                        {% set selected = form_data.plan_id if form_data else None %}
+                        <option value="{{ plan.id }}" {% if selected == plan.id %}selected{% endif %}>{{ plan.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field checkbox">
+                {% set active_flag = form_data.is_active if form_data is not none else True %}
+                <input type="checkbox" id="is_active" name="is_active" value="true" {% if active_flag %}checked{% endif %}>
+                <label for="is_active" style="margin:0;">Активен</label>
+            </div>
+            <div class="field">
+                <label>Чтение</label>
+                <div class="meta">
+                    <div class="item"><strong>ID</strong><br>—</div>
+                    <div class="item"><strong>Создан</strong><br>—</div>
+                    <div class="item"><strong>Попыток использовано</strong><br>0</div>
+                </div>
+            </div>
+            <button type="submit" class="btn">Сохранить</button>
+        </fieldset>
+    </form>
+</div>
+{% endblock %}

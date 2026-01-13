@@ -1,0 +1,57 @@
+{% extends "users/base.html" %}
+{% block content %}
+<div class="card">
+    <h2 style="margin-top:0;">Редактировать пользователя #{{ form_data.id }}</h2>
+
+    {% if errors and errors|length %}
+        <div class="errors">
+            {% for err in errors %}<div>{{ err }}</div>{% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post">
+        <div class="field">
+            <label for="email">Email *</label>
+            <input type="email" id="email" name="email" value="{{ form_data.email }}" required>
+        </div>
+        <div class="field">
+            <label for="name">Имя</label>
+            <input type="text" id="name" name="name" value="{{ form_data.name or '' }}">
+        </div>
+        <div class="field">
+            <label for="phone">Телефон</label>
+            <input type="text" id="phone" name="phone" value="{{ form_data.phone or '' }}">
+        </div>
+        <div class="field">
+            <label for="role">Роль *</label>
+            <select id="role" name="role" required>
+                <option value="USER" {% if form_data.role == 'USER' %}selected{% endif %}>USER</option>
+                <option value="ADMIN" {% if form_data.role == 'ADMIN' %}selected{% endif %}>ADMIN</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="plan_id">Тариф *</label>
+            <select id="plan_id" name="plan_id" required>
+                {% for plan in plans %}
+                    <option value="{{ plan.id }}" {% if form_data.plan_id == plan.id %}selected{% endif %}>{{ plan.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field checkbox">
+            <input type="checkbox" id="is_active" name="is_active" value="true" {% if form_data.is_active %}checked{% endif %}>
+            <label for="is_active" style="margin:0;">Активен</label>
+        </div>
+
+        <div class="field">
+            <label>Чтение</label>
+            <div class="meta">
+                <div class="item"><strong>ID</strong><br>{{ form_data.id }}</div>
+                <div class="item"><strong>Создан</strong><br>{{ form_data.created_at.strftime("%Y-%m-%d %H:%M") if form_data.created_at else "—" }}</div>
+                <div class="item"><strong>Попыток использовано</strong><br>{{ form_data.free_attempts_used }}</div>
+            </div>
+        </div>
+        <button type="submit" class="btn">Сохранить</button>
+        <a class="btn" style="background:#6b7280; margin-left:8px;" href="/users/{{ form_data.id }}">Отмена</a>
+    </form>
+</div>
+{% endblock %}

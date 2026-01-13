@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title or "DroneApp Users" }}</title>
+    <style>
+        :root {
+            --bg: #f7f8fb;
+            --card: #ffffff;
+            --accent: #2563eb;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --danger: #b91c1c;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(180deg, var(--bg) 0%, #eef2ff 100%);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        nav a {
+            margin-right: 12px;
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        nav a:last-child { margin-right: 0; }
+        main {
+            max-width: 960px;
+            margin: 24px auto;
+            padding: 0 16px 32px;
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        th { color: var(--muted); font-weight: 600; }
+        .actions a {
+            margin-right: 8px;
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .actions a:last-child { margin-right: 0; }
+        .muted { color: var(--muted); }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: #eef2ff;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: none;
+            background: var(--accent);
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn[disabled] {
+            background: var(--border);
+            color: var(--muted);
+            cursor: not-allowed;
+        }
+        form .field {
+            margin-bottom: 14px;
+        }
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        input[type="text"], input[type="email"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .errors {
+            background: #fef2f2;
+            border: 1px solid #fecdd3;
+            color: var(--danger);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+        }
+        .meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .meta .item {
+            background: #f9fafb;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .alert {
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            color: #92400e;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo"><strong>DroneApp</strong> · Users</div>
+        <nav>
+            <a href="/users">Список пользователей</a>
+            <a href="/users/create">Создать пользователя</a>
+        </nav>
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

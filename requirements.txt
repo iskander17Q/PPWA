@@ -1,0 +1,9 @@
+fastapi==0.95.1
+uvicorn[standard]==0.22.0
+SQLAlchemy>=1.4
+psycopg2-binary
+python-dotenv
+sqlacodegen
+jinja2
+python-multipart
+email-validator

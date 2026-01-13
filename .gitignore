@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+uvicorn.log
+*.log
+alembic.ini
+.droneapp_codefirst_*.sql
+*.backup
+steps_lab5.txt
+steps_lab3.txt
