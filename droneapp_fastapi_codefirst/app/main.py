@@ -5,10 +5,11 @@ from app.db import get_db
 from sqlalchemy.orm import Session
 from app.accessors.users_accessor import UsersAccessor
 from app.accessors.runs_accessor import RunsAccessor
-from app.controllers import users_controller
+from app.controllers import users_controller, runs_controller
 
-app = FastAPI(title='DroneApp CodeFirst Lab 5 - MVC')
+app = FastAPI(title='DroneApp CodeFirst Lab 6 - MVC complex')
 app.include_router(users_controller.router)
+app.include_router(runs_controller.router)
 
 
 def _serialize_user_basic(user):

@@ -1,0 +1,37 @@
+{% extends "users/base.html" %}
+{% block content %}
+<div class="card">
+    <h2 style="margin-top: 0;">Запуски обработки (Processing Runs)</h2>
+    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <p class="muted" style="margin:0;">Всего: {{ runs|length }}</p>
+        <a class="btn" href="/runs/create">Новый run</a>
+    </div>
+
+    {% if runs %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>User Email</th>
+                <th>Index</th>
+                <th>Status</th>
+                <th>Создан</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for run in runs %}
+            <tr>
+                <td>{{ run.id }}</td>
+                <td>{{ run.user.email if run.user else run.user_email or '—' }}</td>
+                <td>{{ run.index_type }}</td>
+                <td><span class="badge">{{ run.status }}</span></td>
+                <td>{{ run.created_at.strftime("%Y-%m-%d %H:%M") if run.created_at else "—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p class="muted">Запуски не найдены.</p>
+    {% endif %}
+</div>
+{% endblock %}
