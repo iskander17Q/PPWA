@@ -5,7 +5,7 @@ from app.db import get_db
 from sqlalchemy.orm import Session
 from app.accessors.users_accessor import UsersAccessor
 from app.accessors.runs_accessor import RunsAccessor
-from app.controllers import users_controller, runs_controller
+from .controllers import users_controller, runs_controller
 
 app = FastAPI(title='DroneApp CodeFirst Lab 6 - MVC complex')
 app.include_router(users_controller.router)
@@ -38,11 +38,8 @@ def get_users(db: Session = Depends(get_db)):
     return [_serialize_user_basic(u) for u in users]
 
 
-@app.get('/api/runs', response_model=List[dict])
-def get_runs(db: Session = Depends(get_db)):
-    accessor = RunsAccessor(db)
-    runs = accessor.list_runs()
-    return [_serialize_run_basic(r) for r in runs]
+from app.api.routes import runs_api
+app.include_router(runs_api.router)
 
 
 @app.get('/api/users-eager', response_model=List[dict])

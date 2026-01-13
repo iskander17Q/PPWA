@@ -92,7 +92,5 @@ class Report(Base):
     created_at: Mapped[str] = mapped_column(DateTime(), server_default=func.now())
 
 
-    psql "postgresql://postgres:postgres@localhost:5432/postgres" -tc \
-"SELECT 1 FROM pg_database WHERE datname='DroneApp_CodeFirst'" | grep -q 1 \
-|| psql "postgresql://postgres:postgres@localhost:5432/postgres" -c \
-"create database \"DroneApp_CodeFirst\";"
+    # Shell command to create DB removed from source file to avoid SyntaxError during imports
+    # (If needed, run DB creation from shell or migration scripts.)

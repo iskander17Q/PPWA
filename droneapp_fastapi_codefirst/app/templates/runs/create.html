@@ -4,9 +4,9 @@
     <h2 style="margin-top:0;">Создать Processing Run</h2>
 
     {% if errors and errors|length %}
-        <div class="errors">
-            {% for err in errors %}<div>{{ err }}</div>{% endfor %}
-        </div>
+    <div class="errors">
+        {% for err in errors %}<div>{{ err }}</div>{% endfor %}
+    </div>
     {% endif %}
 
     <form method="post">
@@ -15,8 +15,8 @@
                 <label for="user_id">Пользователь *</label>
                 <select id="user_id" name="user_id" required>
                     {% for u in users %}
-                        {% set selected = form_data.user_id if form_data else None %}
-                        <option value="{{ u.id }}" {% if selected == u.id %}selected{% endif %}>{{ u.email }}</option>
+                    {% set selected = form_data.user_id if form_data else None %}
+                    <option value="{{ u.id }}" {% if selected==u.id %}selected{% endif %}>{{ u.email }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -24,17 +24,17 @@
                 <label for="index_type">Index Type *</label>
                 {% set current_index = form_data.index_type if form_data else 'NDVI' %}
                 <select id="index_type" name="index_type" required>
-                    <option value="NDVI" {% if current_index == 'NDVI' %}selected{% endif %}>NDVI</option>
-                    <option value="GNDVI" {% if current_index == 'GNDVI' %}selected{% endif %}>GNDVI</option>
+                    <option value="NDVI" {% if current_index=='NDVI' %}selected{% endif %}>NDVI</option>
+                    <option value="GNDVI" {% if current_index=='GNDVI' %}selected{% endif %}>GNDVI</option>
                 </select>
             </div>
             <div class="field">
                 <label for="status">Status</label>
                 {% set current_status = form_data.status if form_data else 'QUEUED' %}
                 <select id="status" name="status">
-                    <option value="QUEUED" {% if current_status == 'QUEUED' %}selected{% endif %}>QUEUED</option>
-                    <option value="SUCCESS" {% if current_status == 'SUCCESS' %}selected{% endif %}>SUCCESS</option>
-                    <option value="FAILED" {% if current_status == 'FAILED' %}selected{% endif %}>FAILED</option>
+                    <option value="QUEUED" {% if current_status=='QUEUED' %}selected{% endif %}>QUEUED</option>
+                    <option value="SUCCESS" {% if current_status=='SUCCESS' %}selected{% endif %}>SUCCESS</option>
+                    <option value="FAILED" {% if current_status=='FAILED' %}selected{% endif %}>FAILED</option>
                 </select>
             </div>
             <div class="field">
