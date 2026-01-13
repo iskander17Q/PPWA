@@ -13,6 +13,7 @@ from app.db import get_db
 from app.accessors.users_accessor import UsersAccessor
 from app.services.users_service import UsersService
 from app.services.plans_service import PlansService
+from app.services.cache_service import MemoryCacheService
 
 
 # ============================================================================
@@ -39,30 +40,52 @@ def get_users_accessor(db: Session = Depends(get_db)) -> UsersAccessor:
     return UsersAccessor(db)
 
 
-def get_users_service(accessor: UsersAccessor = Depends(get_users_accessor)) -> UsersService:
+def get_users_service(
+    accessor: UsersAccessor = Depends(get_users_accessor)
+) -> UsersService:
     """
     Dependency для получения UsersService.
     
     Lifetime: Transient (создается новый экземпляр при каждом вызове)
-    Зависит от UsersAccessor, который в свою очередь зависит от DB сессии.
+    Зависит от UsersAccessor.
     """
-    return UsersService(accessor)
+    # Временно отключаем кэш из-за проблем с SQLAlchemy объектами
+    return UsersService(accessor, cache_service=None)
 
 
-def get_plans_service(db: Session = Depends(get_db)) -> PlansService:
+def get_plans_service(
+    db: Session = Depends(get_db)
+) -> PlansService:
     """
     Dependency для получения PlansService.
     
     Lifetime: Transient (создается новый экземпляр при каждом вызове)
-    Получает DB сессию напрямую, так как PlansService работает напрямую с БД.
+    Получает DB сессию напрямую.
     """
-    return PlansService(db)
+    # Временно отключаем кэш из-за проблем с SQLAlchemy объектами
+    return PlansService(db, cache_service=None)
 
 
 # ============================================================================
 # Singleton Dependency (один экземпляр на всё приложение)
 # ============================================================================
 # Пример singleton dependency для настроек приложения (только демонстрация)
+
+@lru_cache()
+def get_cache_service() -> MemoryCacheService:
+    """
+    Dependency для получения MemoryCacheService (singleton).
+    
+    Lifetime: Singleton (создается один раз при первом вызове и кешируется)
+    Один экземпляр кэша на все приложение для всех запросов.
+    
+    Пример использования:
+        @router.get("/users")
+        def get_users(cache: MemoryCacheService = Depends(get_cache_service)):
+            ...
+    """
+    return MemoryCacheService()
+
 
 @lru_cache()
 def get_app_settings() -> dict:

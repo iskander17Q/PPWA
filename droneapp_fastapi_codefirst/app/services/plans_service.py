@@ -1,5 +1,10 @@
+from typing import Optional, List
+import logging
 from sqlalchemy.orm import Session
 from app.models.models import User, SubscriptionPlan
+from app.services.cache_service import MemoryCacheService
+
+logger = logging.getLogger(__name__)
 
 
 class PlansService:
@@ -8,8 +13,32 @@ class PlansService:
     Не зависит от FastAPI напрямую, работает только с моделями и сессией БД.
     """
     
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, cache_service: Optional[MemoryCacheService] = None):
         self.db = db
+        self.cache_service = cache_service
+    
+    def list_plans(self) -> List[SubscriptionPlan]:
+        """
+        Возвращает список тарифных планов с кэшированием.
+        
+        Returns:
+            Список тарифных планов
+        """
+        cache_key = "plans:list"
+        
+        if self.cache_service:
+            cached = self.cache_service.get(cache_key)
+            if cached is not None:
+                logger.info(f"cache hit: {cache_key}")
+                return cached
+            logger.info(f"cache miss: {cache_key}")
+        
+        plans = self.db.query(SubscriptionPlan).order_by(SubscriptionPlan.name).all()
+        
+        if self.cache_service:
+            self.cache_service.set(cache_key, plans, ttl_seconds=60)
+        
+        return plans
     
     def delete_plan_hard(self, plan_id: int) -> None:
         """
@@ -39,6 +68,11 @@ class PlansService:
         try:
             self.db.delete(plan)
             self.db.commit()
+            
+            # Сбрасываем кэш после успешного удаления
+            if self.cache_service:
+                self.cache_service.remove_by_prefix("plans:")
+                self.cache_service.remove_by_prefix("users:")  # user.plan зависит от планов
         except Exception as exc:
             self.db.rollback()
             raise ValueError(f"Ошибка при удалении плана: {str(exc)}") from exc
