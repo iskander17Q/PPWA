@@ -58,6 +58,15 @@
             <td class="actions">
                 <a href="/users/{{ user.id }}">Детали</a>
                 <a href="/users/{{ user.id }}/edit">Редактировать</a>
+                {% if user.is_active %}
+                <form method="post" action="/users/{{ user.id }}/deactivate" style="display: inline;">
+                    <button type="submit" style="background: none; border: none; color: var(--error); padding: 0; cursor: pointer; text-decoration: underline; font-size: inherit; font-family: inherit;">Деактивировать</button>
+                </form>
+                {% else %}
+                <form method="post" action="/users/{{ user.id }}/activate" style="display: inline;">
+                    <button type="submit" style="background: none; border: none; color: var(--success); padding: 0; cursor: pointer; text-decoration: underline; font-size: inherit; font-family: inherit;">Активировать</button>
+                </form>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}

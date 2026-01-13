@@ -8,6 +8,7 @@ import traceback
 
 from app.db import get_db
 from app.accessors.runs_accessor import RunsAccessor
+from app.accessors.users_accessor import UsersAccessor
 from app.viewmodels.run_vm import RunViewModel
 
 
@@ -35,7 +36,9 @@ def runs_index(request: Request, db: Session = Depends(get_db)):
 @router.get("/create")
 def runs_create(request: Request, db: Session = Depends(get_db)):
     accessor = _get_accessor(db)
-    users = accessor.list_users()
+    users_accessor = UsersAccessor(db)
+    # Показываем только активных пользователей в dropdown
+    users = users_accessor.list_users(active_only=True)
     return templates.TemplateResponse(
         "runs/create.html",
         {
@@ -50,7 +53,9 @@ def runs_create(request: Request, db: Session = Depends(get_db)):
 @router.post("/create")
 async def runs_create_post(request: Request, db: Session = Depends(get_db)):
     accessor = _get_accessor(db)
-    users = accessor.list_users()
+    users_accessor = UsersAccessor(db)
+    # Показываем только активных пользователей в dropdown
+    users = users_accessor.list_users(active_only=True)
     errors = []
 
     form_raw = await request.form()

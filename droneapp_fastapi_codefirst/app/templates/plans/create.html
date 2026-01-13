@@ -1,0 +1,41 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<div class="page-header">
+    <h1>Создать тарифный план</h1>
+    <p class="muted">Добавление нового тарифного плана в систему</p>
+</div>
+
+{% if errors and errors|length %}
+<div class="alert error">
+    <span>⚠️</span>
+    <div>
+        {% for err in errors %}<div>{{ err }}</div>{% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <form method="post">
+        <div class="field">
+            <label for="name">Название плана *</label>
+            <input type="text" id="name" name="name" value="{{ form_data.name if form_data else '' }}" required placeholder="Например: Free, Pro, Premium">
+        </div>
+        <div class="field">
+            <label for="free_attempts_limit">Лимит попыток *</label>
+            <input type="number" id="free_attempts_limit" name="free_attempts_limit" value="{{ form_data.free_attempts_limit if form_data else '0' }}" required min="0" placeholder="0">
+            <small style="color: var(--text-muted); margin-top: 4px; display: block;">Введите 999999 для безлимитного плана</small>
+        </div>
+        
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="submit" class="btn primary" style="flex: 1;">
+                <span>➕</span>
+                <span>Создать план</span>
+            </button>
+            <a class="btn" href="/plans" style="background: var(--text-secondary);">
+                <span>Отмена</span>
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

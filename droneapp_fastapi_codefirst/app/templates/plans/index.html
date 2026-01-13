@@ -1,8 +1,24 @@
 {% extends 'layout/base.html' %}
 {% block content %}
 <div class="page-header">
-    <h1>Тарифные планы</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1 style="margin: 0;">Тарифные планы</h1>
+            <p class="muted" style="margin: 8px 0 0 0;">Управление тарифными планами системы</p>
+        </div>
+        <a class="btn primary" href="/plans/create">
+            <span>➕</span>
+            <span>Добавить план</span>
+        </a>
+    </div>
 </div>
+
+{% if error_message %}
+<div class="alert error" style="margin-bottom: 20px;">
+    <span>⚠️</span>
+    <span>{{ error_message }}</span>
+</div>
+{% endif %}
 
 <div class="plans-grid">
     {% for plan in plans %}
@@ -30,6 +46,13 @@
             <div class="plan-stats">
                 <span class="stat-label">Пользователей:</span>
                 <span class="stat-value">{{ plan_stats.get(plan.id, 0) }}</span>
+            </div>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                <form method="post" action="/plans/{{ plan.id }}/delete" style="display: inline;" onsubmit="return confirm('Вы уверены, что хотите удалить план «{{ plan.name }}»? Это действие нельзя отменить.');">
+                    <button type="submit" style="background: var(--error); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px; font-family: inherit; width: 100%;">
+                        🗑️ Удалить план
+                    </button>
+                </form>
             </div>
         </div>
     </div>

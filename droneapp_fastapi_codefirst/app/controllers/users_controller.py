@@ -19,7 +19,8 @@ def _get_accessor(db: Session) -> UsersAccessor:
 @router.get("/")
 def users_index(request: Request, db: Session = Depends(get_db)):
     accessor = _get_accessor(db)
-    users = accessor.list_users()
+    # Показываем всех пользователей (включая неактивных) для управления
+    users = accessor.list_users(active_only=False)
     plans = accessor.list_plans()
     return templates.TemplateResponse(
         "users/index.html",
@@ -325,4 +326,22 @@ async def user_edit_post(user_id: int, request: Request, db: Session = Depends(g
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
+    return RedirectResponse(url=f"/users/{user_id}", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/{user_id}/deactivate")
+def user_deactivate(user_id: int, request: Request, db: Session = Depends(get_db)):
+    accessor = _get_accessor(db)
+    user = accessor.deactivate_user(user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден")
+    return RedirectResponse(url=f"/users/{user_id}", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.post("/{user_id}/activate")
+def user_activate(user_id: int, request: Request, db: Session = Depends(get_db)):
+    accessor = _get_accessor(db)
+    user = accessor.activate_user(user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден")
     return RedirectResponse(url=f"/users/{user_id}", status_code=status.HTTP_303_SEE_OTHER)

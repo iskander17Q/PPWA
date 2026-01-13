@@ -4,6 +4,15 @@
     <h2 style="margin:0;">Пользователь #{{ user.id }}</h2>
     <div class="actions">
         <a href="/users/{{ user.id }}/edit">Редактировать</a>
+        {% if user.is_active %}
+        <form method="post" action="/users/{{ user.id }}/deactivate" style="display: inline;">
+            <button type="submit" style="background: var(--error); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: inherit; font-family: inherit;">Деактивировать</button>
+        </form>
+        {% else %}
+        <form method="post" action="/users/{{ user.id }}/activate" style="display: inline;">
+            <button type="submit" style="background: var(--success); color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: inherit; font-family: inherit;">Активировать</button>
+        </form>
+        {% endif %}
         <a href="/users">Назад к списку</a>
     </div>
 </div>
