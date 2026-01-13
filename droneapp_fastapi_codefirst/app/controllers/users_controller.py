@@ -7,6 +7,8 @@ from pydantic import ValidationError
 from app.accessors.users_accessor import UsersAccessor
 from app.db import get_db
 from app.viewmodels.user_vm import UserViewModel
+from app.deps.services import get_users_service
+from app.services.users_service import UsersService
 
 templates = Jinja2Templates(directory="app/templates")
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -330,18 +332,34 @@ async def user_edit_post(user_id: int, request: Request, db: Session = Depends(g
 
 
 @router.post("/{user_id}/deactivate")
-def user_deactivate(user_id: int, request: Request, db: Session = Depends(get_db)):
-    accessor = _get_accessor(db)
-    user = accessor.deactivate_user(user_id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден")
-    return RedirectResponse(url=f"/users/{user_id}", status_code=status.HTTP_303_SEE_OTHER)
+def user_deactivate(
+    user_id: int,
+    request: Request,
+    users_service: UsersService = Depends(get_users_service)
+):
+    """
+    Деактивирует пользователя через UsersService.
+    Контроллер стал "тонким" - только получение зависимости и обработка результата.
+    """
+    try:
+        users_service.deactivate_user(user_id)
+        return RedirectResponse(url=f"/users/{user_id}", status_code=status.HTTP_303_SEE_OTHER)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
 
 @router.post("/{user_id}/activate")
-def user_activate(user_id: int, request: Request, db: Session = Depends(get_db)):
-    accessor = _get_accessor(db)
-    user = accessor.activate_user(user_id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден")
-    return RedirectResponse(url=f"/users/{user_id}", status_code=status.HTTP_303_SEE_OTHER)
+def user_activate(
+    user_id: int,
+    request: Request,
+    users_service: UsersService = Depends(get_users_service)
+):
+    """
+    Активирует пользователя через UsersService.
+    Контроллер стал "тонким" - только получение зависимости и обработка результата.
+    """
+    try:
+        users_service.activate_user(user_id)
+        return RedirectResponse(url=f"/users/{user_id}", status_code=status.HTTP_303_SEE_OTHER)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))

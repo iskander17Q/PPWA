@@ -4,6 +4,8 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.accessors.users_accessor import UsersAccessor
 from app.db import get_db
+from app.deps.services import get_plans_service
+from app.services.plans_service import PlansService
 
 templates = Jinja2Templates(directory="app/templates")
 router = APIRouter(prefix="/plans", tags=["Plans"])
@@ -99,13 +101,23 @@ async def plans_create_post(request: Request, db: Session = Depends(get_db)):
 
 
 @router.post("/{plan_id}/delete")
-def plan_delete(plan_id: int, request: Request, db: Session = Depends(get_db)):
-    accessor = _get_accessor(db)
+def plan_delete(
+    plan_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    plans_service: PlansService = Depends(get_plans_service)
+):
+    """
+    Удаляет тарифный план через PlansService.
+    Контроллер стал "тонким" - только получение зависимости и обработка результата.
+    """
     try:
-        accessor.delete_plan(plan_id)
+        plans_service.delete_plan_hard(plan_id)
         return RedirectResponse(url="/plans", status_code=status.HTTP_303_SEE_OTHER)
     except ValueError as exc:
         error_msg = str(exc)
+        # Для отображения ошибки нужно загрузить планы и статистику
+        accessor = _get_accessor(db)
         plans = accessor.list_plans()
         from app.models.models import User
         plan_stats = {}
